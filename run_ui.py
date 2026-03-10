@@ -196,7 +196,7 @@ async def login_handler():
         user = dotenv.get_dotenv_value("AUTH_LOGIN")
         password = dotenv.get_dotenv_value("AUTH_PASSWORD")
 
-        if request.form['username'] == user and request.form['password'] == password:
+        if request.form.get('username') == user and request.form.get('password') == password:
             session['authentication'] = login.get_credentials_hash()
             return redirect(url_for('serve_index'))
         else:

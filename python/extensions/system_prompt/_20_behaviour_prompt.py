@@ -6,7 +6,11 @@ from python.helpers import files, memory
 
 class BehaviourPrompt(Extension):
 
-    async def execute(self, system_prompt: list[str]=[], loop_data: LoopData = LoopData(), **kwargs):
+    async def execute(self, system_prompt: list[str] | None = None, loop_data: LoopData | None = None, **kwargs):
+        if system_prompt is None:
+            system_prompt = []
+        if loop_data is None:
+            loop_data = LoopData()
         prompt = read_rules(self.agent)
         system_prompt.insert(0, prompt) #.append(prompt)
 

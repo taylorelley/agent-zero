@@ -1643,6 +1643,9 @@ function escapeHTML(str) {
 }
 
 function convertPathsToLinks(str) {
+  function escapeAttr(s) {
+    return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
   function generateLinks(match) {
     const parts = match.split("/");
     if (!parts[0]) parts.shift(); // drop empty element left of first "
@@ -1650,7 +1653,7 @@ function convertPathsToLinks(str) {
     let html = "";
     for (const part of parts) {
       conc += "/" + part;
-      html += `/<a href="#" class="path-link" onclick="openFileLink('${conc}');">${part}</a>`;
+      html += `/<a href="#" class="path-link" data-path="${escapeAttr(conc)}">${part}</a>`;
     }
     return html;
   }
@@ -2254,3 +2257,12 @@ function smoothRender(element, newContent, delay = 350) {
 
   element.dataset.smoothTimeoutId = String(timeoutId);
 }
+
+// Delegated click handler for path links (replaces inline onclick for XSS safety)
+document.addEventListener('click', function(e) {
+    const link = e.target.closest('.path-link[data-path]');
+    if (link) {
+        e.preventDefault();
+        openFileLink(link.dataset.path);
+    }
+});
