@@ -6,7 +6,9 @@ import asyncio
 
 class RenameChat(Extension):
 
-    async def execute(self, loop_data: LoopData = LoopData(), **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
         asyncio.create_task(self.change_name())
 
     async def change_name(self):

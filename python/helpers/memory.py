@@ -60,12 +60,10 @@ class Memory:
         SOLUTIONS = "solutions"
 
     index: dict[str, "MyFaiss"] = {}
-    _index_lock: asyncio.Lock | None = None
+    _index_lock: asyncio.Lock = asyncio.Lock()
 
     @classmethod
     def _get_lock(cls) -> asyncio.Lock:
-        if cls._index_lock is None:
-            cls._index_lock = asyncio.Lock()
         return cls._index_lock
 
     @staticmethod
@@ -399,7 +397,9 @@ class Memory:
             self._save_db()  # persist
         return rem_docs
 
-    async def insert_text(self, text, metadata: dict = {}):
+    async def insert_text(self, text, metadata: dict | None = None):
+        if metadata is None:
+            metadata = {}
         doc = Document(text, metadata=metadata)
         ids = await self.insert_documents([doc])
         return ids[0]

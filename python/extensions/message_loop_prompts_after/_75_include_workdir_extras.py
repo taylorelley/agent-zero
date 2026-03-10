@@ -7,7 +7,9 @@ from python.helpers import file_tree
 from python.helpers import files
 
 class IncludeWorkdirExtras(Extension):
-    async def execute(self, loop_data: LoopData = LoopData(), **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
 
         project_name = projects.get_context_project_name(self.agent.context)
 

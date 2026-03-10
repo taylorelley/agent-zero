@@ -6,7 +6,9 @@ DATA_NAME_TASK = "_organize_history_task"
 
 
 class OrganizeHistory(Extension):
-    async def execute(self, loop_data: LoopData = LoopData(), **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
         # is there a running task? if yes, skip this round, the wait extension will double check the context size
         task: DeferredTask|None = self.agent.get_data(DATA_NAME_TASK)
         if task and not task.is_ready():

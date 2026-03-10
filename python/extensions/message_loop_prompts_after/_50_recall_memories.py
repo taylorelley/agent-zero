@@ -21,7 +21,9 @@ class RecallMemories(Extension):
     # SOLUTIONS_MAX_RESULT = 3
     # THRESHOLD = DEFAULT_MEMORY_THRESHOLD
 
-    async def execute(self, loop_data: LoopData = LoopData(), **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
 
         set = settings.get_settings()
 

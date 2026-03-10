@@ -7,7 +7,9 @@ from agent import AgentContext, Agent, LoopData
 class ProcessQueue(Extension):
     """Process queued messages after monologue ends."""
 
-    async def execute(self, loop_data: LoopData = LoopData(), **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
         # Only process for agent0 (main agent)
         if self.agent.number != 0:
             return

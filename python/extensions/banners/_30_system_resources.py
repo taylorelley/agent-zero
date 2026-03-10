@@ -4,7 +4,11 @@ import psutil
 
 
 class SystemResourcesCheck(Extension):
-    async def execute(self, banners: list = [], frontend_context: dict = {}, **kwargs):
+    async def execute(self, banners: list | None = None, frontend_context: dict | None = None, **kwargs):
+        if banners is None:
+            banners = []
+        if frontend_context is None:
+            frontend_context = {}
         try:
             cpu_percent = psutil.cpu_percent(interval=0.1)
         except Exception:

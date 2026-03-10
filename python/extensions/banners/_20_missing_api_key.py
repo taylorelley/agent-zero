@@ -15,7 +15,11 @@ class MissingApiKeyCheck(Extension):
         "embedding": "Embedding Model",
     }
 
-    async def execute(self, banners: list = [], frontend_context: dict = {}, **kwargs):
+    async def execute(self, banners: list | None = None, frontend_context: dict | None = None, **kwargs):
+        if banners is None:
+            banners = []
+        if frontend_context is None:
+            frontend_context = {}
         current_settings = settings_helper.get_settings()
         model_providers = {
             "chat": current_settings.get("chat_model_provider", ""),

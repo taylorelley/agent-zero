@@ -5,7 +5,9 @@ from python.helpers.localization import Localization
 
 
 class IncludeCurrentDatetime(Extension):
-    async def execute(self, loop_data: LoopData = LoopData(), **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
         # get current datetime
         current_datetime = Localization.get().utc_dt_to_localtime_str(
             datetime.now(timezone.utc), sep=" ", timespec="seconds"

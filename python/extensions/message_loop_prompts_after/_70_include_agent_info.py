@@ -3,7 +3,9 @@ from agent import LoopData
 
 
 class IncludeAgentInfo(Extension):
-    async def execute(self, loop_data: LoopData = LoopData(), **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
 
         # read prompt
         agent_info_prompt = self.agent.read_prompt(
