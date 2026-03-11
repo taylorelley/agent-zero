@@ -1,13 +1,16 @@
 import asyncio
 from python.helpers.extension import Extension
 from python.helpers import message_queue as mq
+from python.helpers.defer import DeferredTask, THREAD_BACKGROUND
 from agent import AgentContext, Agent, LoopData
 
 
 class ProcessQueue(Extension):
     """Process queued messages after monologue ends."""
 
-    async def execute(self, loop_data: LoopData = LoopData(), **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
         # Only process for agent0 (main agent)
         if self.agent.number != 0:
             return
@@ -18,7 +21,8 @@ class ProcessQueue(Extension):
         if mq.has_queue(context):
             # Schedule delayed task to send next queued message
             # This allows current monologue to fully complete first
-            asyncio.create_task(self._delayed_send(context))
+            task = DeferredTask(thread_name=THREAD_BACKGROUND)
+            task.start_task(self._delayed_send, context)
 
     async def _delayed_send(self, context: AgentContext):
         """Wait for task to complete, then send next queued message."""

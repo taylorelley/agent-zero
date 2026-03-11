@@ -1,5 +1,11 @@
 // Custom confirmation dialog. CSS in /css/modals.css
 
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 const DIALOG_TYPES = {
   warning: { icon: 'warning', color: 'var(--color-warning, #f59e0b)' },
   danger: { icon: 'error', color: 'var(--color-error, #ef4444)' },
@@ -27,13 +33,13 @@ export function showConfirmDialog(options) {
     dialog.className = 'confirm-dialog';
     dialog.innerHTML = `
       <div class="confirm-dialog-header">
-        <span class="confirm-dialog-icon material-symbols-outlined" style="color: ${typeConfig.color}">${typeConfig.icon}</span>
-        <span class="confirm-dialog-title">${title}</span>
+        <span class="confirm-dialog-icon material-symbols-outlined" style="color: ${typeConfig.color}">${escapeHtml(typeConfig.icon)}</span>
+        <span class="confirm-dialog-title">${escapeHtml(title)}</span>
       </div>
-      <div class="confirm-dialog-body">${message}</div>
+      <div class="confirm-dialog-body">${escapeHtml(message)}</div>
       <div class="confirm-dialog-footer">
-        <button class="button cancel confirm-dialog-cancel">${cancelText}</button>
-        <button class="button confirm confirm-dialog-confirm">${confirmText}</button>
+        <button class="button cancel confirm-dialog-cancel">${escapeHtml(cancelText)}</button>
+        <button class="button confirm confirm-dialog-confirm">${escapeHtml(confirmText)}</button>
       </div>
     `;
 

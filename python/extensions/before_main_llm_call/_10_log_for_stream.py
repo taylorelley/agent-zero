@@ -9,7 +9,9 @@ import math
 
 class LogForStream(Extension):
 
-    async def execute(self, loop_data: LoopData = LoopData(), text: str = "", **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, text: str = "", **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
         # create log message and store it in loop data temporary params
         if "log_item_generating" not in loop_data.params_temporary:
             loop_data.params_temporary["log_item_generating"] = (

@@ -18,6 +18,7 @@ from langchain_community.vectorstores.utils import (
 )
 from langchain_core.embeddings import Embeddings
 
+import asyncio
 import os, json
 
 import numpy as np
@@ -59,10 +60,21 @@ class Memory:
         SOLUTIONS = "solutions"
 
     index: dict[str, "MyFaiss"] = {}
+    _index_lock: asyncio.Lock = asyncio.Lock()
+
+    @classmethod
+    def _get_lock(cls) -> asyncio.Lock:
+        return cls._index_lock
 
     @staticmethod
     async def get(agent: Agent):
         memory_subdir = get_agent_memory_subdir(agent)
+        async with Memory._get_lock():
+            return await Memory._get_or_create(agent, memory_subdir)
+
+    @staticmethod
+    async def _get_or_create(agent: Agent, memory_subdir: str):
+        """Get or create a Memory instance. Caller must hold _index_lock."""
         if Memory.index.get(memory_subdir) is None:
             log_item = agent.context.log.log(
                 type="util",
@@ -94,35 +106,37 @@ class Memory:
         log_item: LogItem | None = None,
         preload_knowledge: bool = True,
     ):
-        if not Memory.index.get(memory_subdir):
-            import initialize
+        async with Memory._get_lock():
+            if not Memory.index.get(memory_subdir):
+                import initialize
 
-            agent_config = initialize.initialize_agent()
-            model_config = agent_config.embeddings_model
-            db, _created = Memory.initialize(
-                log_item=log_item,
-                model_config=model_config,
-                memory_subdir=memory_subdir,
-                in_memory=False,
-            )
-            wrap = Memory(db, memory_subdir=memory_subdir)
-            if preload_knowledge:
-                knowledge_subdirs = get_knowledge_subdirs_by_memory_subdir(
-                    memory_subdir, agent_config.knowledge_subdirs or []
+                agent_config = initialize.initialize_agent()
+                model_config = agent_config.embeddings_model
+                db, _created = Memory.initialize(
+                    log_item=log_item,
+                    model_config=model_config,
+                    memory_subdir=memory_subdir,
+                    in_memory=False,
                 )
-                if knowledge_subdirs:
-                    await wrap.preload_knowledge(
-                        log_item, knowledge_subdirs, memory_subdir
+                wrap = Memory(db, memory_subdir=memory_subdir)
+                if preload_knowledge:
+                    knowledge_subdirs = get_knowledge_subdirs_by_memory_subdir(
+                        memory_subdir, agent_config.knowledge_subdirs or []
                     )
-            Memory.index[memory_subdir] = db
-        return Memory(db=Memory.index[memory_subdir], memory_subdir=memory_subdir)
+                    if knowledge_subdirs:
+                        await wrap.preload_knowledge(
+                            log_item, knowledge_subdirs, memory_subdir
+                        )
+                Memory.index[memory_subdir] = db
+            return Memory(db=Memory.index[memory_subdir], memory_subdir=memory_subdir)
 
     @staticmethod
     async def reload(agent: Agent):
         memory_subdir = get_agent_memory_subdir(agent)
-        if Memory.index.get(memory_subdir):
-            del Memory.index[memory_subdir]
-        return await Memory.get(agent)
+        async with Memory._get_lock():
+            if Memory.index.get(memory_subdir):
+                del Memory.index[memory_subdir]
+            return await Memory._get_or_create(agent, memory_subdir)
 
     @staticmethod
     def initialize(
@@ -325,7 +339,8 @@ class Memory:
         return index
 
     def get_document_by_id(self, id: str) -> Document | None:
-        return self.db.get_by_ids(id)[0]
+        results = self.db.get_by_ids(id)
+        return results[0] if results else None
 
     async def search_similarity_threshold(
         self, query: str, limit: int, threshold: float, filter: str = ""
@@ -387,7 +402,9 @@ class Memory:
             self._save_db()  # persist
         return rem_docs
 
-    async def insert_text(self, text, metadata: dict = {}):
+    async def insert_text(self, text, metadata: dict | None = None):
+        if metadata is None:
+            metadata = {}
         doc = Document(text, metadata=metadata)
         ids = await self.insert_documents([doc])
         return ids[0]

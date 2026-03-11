@@ -141,9 +141,9 @@ export async function getCsrfToken() {
     }
 
     if (response.redirected && response.url.endsWith("/login")) {
-      // redirect to login
+      // redirect to login — return a never-resolving promise since the page is navigating away
       window.location.href = response.url;
-      return;
+      return new Promise(() => {});
     }
     const json = await response.json();
     if (json.ok) {

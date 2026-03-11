@@ -9,7 +9,9 @@ from python.extensions.before_main_llm_call._10_log_for_stream import build_head
 
 class LogFromStream(Extension):
 
-    async def execute(self, loop_data: LoopData = LoopData(), text: str = "", **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, text: str = "", **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
 
         # thought length indicator
         length = f"({len(text)})" if text else ""

@@ -3,7 +3,9 @@ from agent import LoopData
 
 class WaitingForInputMsg(Extension):
 
-    async def execute(self, loop_data: LoopData = LoopData(), **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
         # show temp info message
         if self.agent.number == 0:
             self.agent.context.log.set_initial_progress()

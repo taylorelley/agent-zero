@@ -1,4 +1,5 @@
 import asyncio
+import threading
 import time
 from typing import Callable, Awaitable
 
@@ -9,13 +10,15 @@ class RateLimiter:
         self.limits = {key: value if isinstance(value, (int, float)) else 0 for key, value in (limits or {}).items()}
         self.values = {key: [] for key in self.limits.keys()}
         self._lock = asyncio.Lock()
+        self._sync_lock = threading.Lock()
 
     def add(self, **kwargs: int):
-        now = time.time()
-        for key, value in kwargs.items():
-            if not key in self.values:
-                self.values[key] = []
-            self.values[key].append((now, value))
+        with self._sync_lock:
+            now = time.time()
+            for key, value in kwargs.items():
+                if key not in self.values:
+                    self.values[key] = []
+                self.values[key].append((now, value))
 
     async def cleanup(self):
         async with self._lock:

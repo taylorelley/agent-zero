@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 import logging
 import os
+
+logger = logging.getLogger(__name__)
 from typing import (
     Any,
     Awaitable,
@@ -217,7 +219,7 @@ def get_api_key(service: str) -> str:
 def get_rate_limiter(
     provider: str, name: str, requests: int, input: int, output: int
 ) -> RateLimiter:
-    key = f"{provider}\\{name}"
+    key = f"{provider}/{name}"
     rate_limiters[key] = limiter = rate_limiters.get(key, RateLimiter(seconds=60))
     limiter.limits["requests"] = requests or 0
     limiter.limits["input"] = input or 0
@@ -650,8 +652,8 @@ class BrowserCompatibleChatWrapper(ChatOpenRouter):
                     cleaned = browser_use_monkeypatch.gemini_clean_and_conform(msg.content) # type: ignore
                     if cleaned:
                         msg.content = cleaned
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Gemini content cleanup failed: %s", e)
 
         except Exception as e:
             raise e
@@ -663,7 +665,7 @@ class BrowserCompatibleChatWrapper(ChatOpenRouter):
                     js = dirty_json.parse(resp.choices[0].message.content) # type: ignore
                     resp.choices[0].message.content = dirty_json.stringify(js) # type: ignore
         except Exception as e:
-            pass
+            logger.debug("Browser-use JSON post-processing failed: %s", e)
 
         return resp
 

@@ -11,7 +11,9 @@ from python.helpers.defer import DeferredTask, THREAD_BACKGROUND
 
 class MemorizeMemories(Extension):
 
-    async def execute(self, loop_data: LoopData = LoopData(), **kwargs):
+    async def execute(self, loop_data: LoopData | None = None, **kwargs):
+        if loop_data is None:
+            loop_data = LoopData()
         # try:
 
         set = settings.get_settings()
