@@ -70,30 +70,35 @@ class Memory:
     async def get(agent: Agent):
         memory_subdir = get_agent_memory_subdir(agent)
         async with Memory._get_lock():
-            if Memory.index.get(memory_subdir) is None:
-                log_item = agent.context.log.log(
-                    type="util",
-                    heading=f"Initializing VectorDB in '/{memory_subdir}'",
-                )
-                db, created = Memory.initialize(
-                    log_item,
-                    agent.config.embeddings_model,
-                    memory_subdir,
-                    False,
-                )
-                Memory.index[memory_subdir] = db
-                wrap = Memory(db, memory_subdir=memory_subdir)
-                knowledge_subdirs = get_knowledge_subdirs_by_memory_subdir(
-                    memory_subdir, agent.config.knowledge_subdirs or []
-                )
-                if knowledge_subdirs:
-                    await wrap.preload_knowledge(log_item, knowledge_subdirs, memory_subdir)
-                return wrap
-            else:
-                return Memory(
-                    db=Memory.index[memory_subdir],
-                    memory_subdir=memory_subdir,
-                )
+            return await Memory._get_or_create(agent, memory_subdir)
+
+    @staticmethod
+    async def _get_or_create(agent: Agent, memory_subdir: str):
+        """Get or create a Memory instance. Caller must hold _index_lock."""
+        if Memory.index.get(memory_subdir) is None:
+            log_item = agent.context.log.log(
+                type="util",
+                heading=f"Initializing VectorDB in '/{memory_subdir}'",
+            )
+            db, created = Memory.initialize(
+                log_item,
+                agent.config.embeddings_model,
+                memory_subdir,
+                False,
+            )
+            Memory.index[memory_subdir] = db
+            wrap = Memory(db, memory_subdir=memory_subdir)
+            knowledge_subdirs = get_knowledge_subdirs_by_memory_subdir(
+                memory_subdir, agent.config.knowledge_subdirs or []
+            )
+            if knowledge_subdirs:
+                await wrap.preload_knowledge(log_item, knowledge_subdirs, memory_subdir)
+            return wrap
+        else:
+            return Memory(
+                db=Memory.index[memory_subdir],
+                memory_subdir=memory_subdir,
+            )
 
     @staticmethod
     async def get_by_subdir(
@@ -131,7 +136,7 @@ class Memory:
         async with Memory._get_lock():
             if Memory.index.get(memory_subdir):
                 del Memory.index[memory_subdir]
-        return await Memory.get(agent)
+            return await Memory._get_or_create(agent, memory_subdir)
 
     @staticmethod
     def initialize(

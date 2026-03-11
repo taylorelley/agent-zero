@@ -7,7 +7,7 @@ from agent import LoopData
 class IncludeLoadedSkills(Extension):
     async def execute(self, loop_data: LoopData | None = None, **kwargs):
         if loop_data is None:
-            loop_data = LoopData()
+            return
         extras = loop_data.extras_persistent
 
         # Get loaded skills names

@@ -17,9 +17,9 @@ class MissingApiKeyCheck(Extension):
 
     async def execute(self, banners: list | None = None, frontend_context: dict | None = None, **kwargs):
         if banners is None:
-            banners = []
+            raise ValueError("banners must be provided")
         if frontend_context is None:
-            frontend_context = {}
+            raise ValueError("frontend_context must be provided")
         current_settings = settings_helper.get_settings()
         model_providers = {
             "chat": current_settings.get("chat_model_provider", ""),

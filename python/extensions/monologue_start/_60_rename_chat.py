@@ -1,15 +1,14 @@
 from python.helpers import persist_chat, tokens
 from python.helpers.extension import Extension
 from agent import LoopData
-import asyncio
+from python.helpers.defer import DeferredTask, THREAD_BACKGROUND
 
 
 class RenameChat(Extension):
 
     async def execute(self, loop_data: LoopData | None = None, **kwargs):
-        if loop_data is None:
-            loop_data = LoopData()
-        asyncio.create_task(self.change_name())
+        task = DeferredTask(thread_name=THREAD_BACKGROUND)
+        task.start_task(self.change_name)
 
     async def change_name(self):
         try:

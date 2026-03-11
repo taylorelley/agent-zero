@@ -8,7 +8,7 @@ class UnsecuredConnectionCheck(Extension):
 
     async def execute(self, banners: list | None = None, frontend_context: dict | None = None, **kwargs):
         if banners is None:
-            banners = []
+            raise ValueError("banners must be provided")
         if frontend_context is None:
             frontend_context = {}
         hostname = frontend_context.get("hostname", "")
